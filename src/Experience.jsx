@@ -1,4 +1,6 @@
 import {
+  ContactShadows,
+  Environment,
   Float,
   Html,
   MeshReflectorMaterial,
@@ -6,10 +8,10 @@ import {
   Text,
   useHelper,
 } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { useControls } from "leva";
 import { Perf } from "r3f-perf";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
 export default function Experience() {
@@ -20,6 +22,8 @@ export default function Experience() {
   const directionalLightRef = useRef();
 
   useFrame((state, delta) => {
+    // const time = state.clock.elapsedTime;
+    // cubeRef.current.position.x = 2 + Math.sin(time);
     cubeRef.current.rotation.y += delta;
   });
 
@@ -47,20 +51,87 @@ export default function Experience() {
     },
   });
 
+  const { shadowColor, opacity, blur } = useControls("contact shadows", {
+    shadowColor: "#1d8f75",
+    opacity: { value: 0.4, min: 0, max: 1 },
+    blur: { value: 2.8, min: 0, max: 10 },
+  });
+
+  const { sunPosition } = useControls("sky", {
+    sunPosition: { value: [1, 2, 3] },
+  });
+
+  const { envMapIntensity } = useControls("environment map", {
+    envMapIntensity: { value: 3.5, min: 0, max: 12 },
+  });
+
+  const scene = useThree((state) => state.scene);
+  useEffect(() => {
+    scene.environmentIntensity = envMapIntensity;
+  }, [envMapIntensity]);
+
   useHelper(directionalLightRef, THREE.DirectionalLightHelper, 1);
 
   return (
     <>
+      <Environment
+        background
+        files={[
+          "./environmentMaps/2/px.jpg",
+          "./environmentMaps/2/nx.jpg",
+          "./environmentMaps/2/py.jpg",
+          "./environmentMaps/2/ny.jpg",
+          "./environmentMaps/2/pz.jpg",
+          "./environmentMaps/2/nz.jpg",
+        ]}
+      />
       {perfVisible ? <Perf position="top-left" /> : null}
       <OrbitControls makeDefault />
 
-      <directionalLight
-        position={[1, 2, 3]}
+      {/* <AccumulativeShadows
+        position={[0, -0.99, 0]}
+        scale={20}
+        color="#316d39"
+        opacity={0.8}
+        frames={Infinity}
+        temporal
+        blend={100}
+      >
+        <RandomizedLight
+          position={[1, 2, 3]}
+          amount={8}
+          radius={1}
+          ambient={0.5}
+          intensity={3}
+          bias={0.001}
+        />
+      </AccumulativeShadows>*/}
+
+      <ContactShadows
+        position={[0, -0.99, 0]}
+        scale={10}
+        resolution={512}
+        far={5}
+        color={shadowColor}
+        opacity={opacity}
+        blur={blur}
+      />
+
+      {/*<directionalLight
+        position={sunPosition}
         intensity={4.5}
         ref={directionalLightRef}
         castShadow
+        shadow-mapSize={[1024, 1024]}
+        shadow-camera-top={5}
+        shadow-camera-right={5}
+        shadow-camera-bottom={-5}
+        shadow-camera-left={-5}
+        shadow-camera-near={1}
+        shadow-camera-far={10}
       />
       <ambientLight intensity={1.5} />
+      <Sky sunPosition={sunPosition} />*/}
 
       <group ref={groupRef}>
         <mesh
@@ -70,7 +141,10 @@ export default function Experience() {
           castShadow
         >
           <sphereGeometry scale={1.5} />
-          <meshStandardMaterial color={color} />
+          <meshStandardMaterial
+            color={color}
+            envMapIntensity={envMapIntensity}
+          />
           <Html
             position={[1, 1, 0]}
             wrapperClass="label"
@@ -90,7 +164,10 @@ export default function Experience() {
           castShadow
         >
           <boxGeometry scale={1.5} />
-          <meshStandardMaterial color="mediumpurple" />
+          <meshStandardMaterial
+            color="mediumpurple"
+            envMapIntensity={envMapIntensity}
+          />
         </mesh>
       </group>
 
@@ -99,7 +176,6 @@ export default function Experience() {
         position-y={-1}
         rotation-x={-Math.PI * 0.5}
         scale={20}
-        receiveShadow
       >
         <planeGeometry />
         <MeshReflectorMaterial
@@ -109,6 +185,7 @@ export default function Experience() {
           mirror={0.5}
           color="greenYellow"
           side={THREE.DoubleSide}
+          envMapIntensity={envMapIntensity}
         />
       </mesh>
 
@@ -122,7 +199,10 @@ export default function Experience() {
           textAlign="center"
         >
           Three.JS Journey
-          <meshNormalMaterial side={THREE.DoubleSide} />
+          <meshNormalMaterial
+            side={THREE.DoubleSide}
+            envMapIntensity={envMapIntensity}
+          />
         </Text>
       </Float>
     </>
