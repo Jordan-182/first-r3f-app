@@ -3,20 +3,21 @@ import {
   Html,
   MeshReflectorMaterial,
   OrbitControls,
-  PivotControls,
   Text,
-  TransformControls,
+  useHelper,
 } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useControls } from "leva";
 import { Perf } from "r3f-perf";
 import { useRef } from "react";
+import * as THREE from "three";
 
 export default function Experience() {
   const sphereRef = useRef();
   const cubeRef = useRef();
   const planeRef = useRef();
   const groupRef = useRef();
+  const directionalLightRef = useRef();
 
   useFrame((state, delta) => {
     cubeRef.current.rotation.y += delta;
@@ -46,68 +47,68 @@ export default function Experience() {
     },
   });
 
+  useHelper(directionalLightRef, THREE.DirectionalLightHelper, 1);
+
   return (
     <>
       {perfVisible ? <Perf position="top-left" /> : null}
       <OrbitControls makeDefault />
 
-      <directionalLight position={[1, 2, 3]} intensity={4.5} />
+      <directionalLight
+        position={[1, 2, 3]}
+        intensity={4.5}
+        ref={directionalLightRef}
+        castShadow
+      />
       <ambientLight intensity={1.5} />
 
       <group ref={groupRef}>
-        <PivotControls
-          anchor={[0, 0, 0]}
-          depthTest={false}
-          lineWidth={4}
-          axisColors={["#9381ff", "#ff4d6d", "#7ae582"]}
-          scale={100}
-          fixed={true}
+        <mesh
+          position={[position.x, position.y, 0]}
+          ref={sphereRef}
+          visible={visible}
+          castShadow
         >
-          <mesh
-            position={[position.x, position.y, 0]}
-            ref={sphereRef}
-            visible={visible}
+          <sphereGeometry scale={1.5} />
+          <meshStandardMaterial color={color} />
+          <Html
+            position={[1, 1, 0]}
+            wrapperClass="label"
+            center
+            distanceFactor={6}
+            occlude={[cubeRef, sphereRef, planeRef]}
           >
-            <sphereGeometry scale={1.5} />
-            <meshStandardMaterial color={color} />
-            <Html
-              position={[1, 1, 0]}
-              wrapperClass="label"
-              center
-              distanceFactor={6}
-              occlude={[cubeRef, sphereRef, planeRef]}
-            >
-              That's a sphere
-            </Html>
-          </mesh>
-        </PivotControls>
+            That's a sphere
+          </Html>
+        </mesh>
 
         <mesh
           ref={cubeRef}
           rotation-y={Math.PI * 0.25}
           position-x={2}
           scale={scale}
+          castShadow
         >
           <boxGeometry scale={1.5} />
           <meshStandardMaterial color="mediumpurple" />
         </mesh>
-        <TransformControls object={cubeRef} mode="translate" />
       </group>
 
       <mesh
         ref={planeRef}
         position-y={-1}
         rotation-x={-Math.PI * 0.5}
-        scale={10}
+        scale={20}
+        receiveShadow
       >
         <planeGeometry />
-        {/* <meshStandardMaterial color="greenyellow" side={THREE.DoubleSide} /> */}
         <MeshReflectorMaterial
           resolution={512}
           blur={[1000, 1000]}
           mixBlur={1}
           mirror={0.5}
           color="greenYellow"
+          side={THREE.DoubleSide}
         />
       </mesh>
 
@@ -121,7 +122,7 @@ export default function Experience() {
           textAlign="center"
         >
           Three.JS Journey
-          <meshNormalMaterial />
+          <meshNormalMaterial side={THREE.DoubleSide} />
         </Text>
       </Float>
     </>
