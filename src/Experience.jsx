@@ -8,6 +8,8 @@ import {
   TransformControls,
 } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
+import { useControls } from "leva";
+import { Perf } from "r3f-perf";
 import { useRef } from "react";
 
 export default function Experience() {
@@ -20,8 +22,33 @@ export default function Experience() {
     cubeRef.current.rotation.y += delta;
   });
 
+  const { perfVisible } = useControls({
+    perfVisible: true,
+  });
+
+  const { position, color, visible } = useControls("sphere", {
+    position: {
+      value: { x: -2, y: 0 },
+      min: -4,
+      max: 4,
+      step: 0.01,
+      joystick: "invertY",
+    },
+    color: "#ff0000",
+    visible: true,
+  });
+
+  const { scale } = useControls("cube", {
+    scale: {
+      value: 1.5,
+      min: 0.5,
+      max: 3,
+    },
+  });
+
   return (
     <>
+      {perfVisible ? <Perf position="top-left" /> : null}
       <OrbitControls makeDefault />
 
       <directionalLight position={[1, 2, 3]} intensity={4.5} />
@@ -36,9 +63,13 @@ export default function Experience() {
           scale={100}
           fixed={true}
         >
-          <mesh position-x={-2} ref={sphereRef}>
+          <mesh
+            position={[position.x, position.y, 0]}
+            ref={sphereRef}
+            visible={visible}
+          >
             <sphereGeometry scale={1.5} />
-            <meshStandardMaterial color="orange" />
+            <meshStandardMaterial color={color} />
             <Html
               position={[1, 1, 0]}
               wrapperClass="label"
@@ -55,7 +86,7 @@ export default function Experience() {
           ref={cubeRef}
           rotation-y={Math.PI * 0.25}
           position-x={2}
-          scale={1.5}
+          scale={scale}
         >
           <boxGeometry scale={1.5} />
           <meshStandardMaterial color="mediumpurple" />
